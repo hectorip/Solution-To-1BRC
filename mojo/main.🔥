@@ -1,0 +1,45 @@
+
+from csv import CsvTable
+from mojo_hash.hashmap import HashMapDict
+from mojo_hash.fnv1a import fnv1a64
+
+
+@value
+struct Measurement(CollectionElement):
+    var count: Int
+    var sum: Float64
+    var max: Float64
+    var min: Float64
+
+
+fn parseFloat(s: String) -> Float64:
+    let f: Float64
+
+    try:
+      let parts = s.split('.')
+      let whole = atol(parts[0])
+      let frac = atol(parts[1])
+      f = whole + frac / 10
+    except:
+      f = 0.0
+    return f
+
+fn main() raises:
+    var map = HashMapDict[Measurement, fnv1a64]()
+    with open('../../measurements.txt', 'r') as f:
+      let csv = CsvTable(f.read(), True)
+      # print(csv.row_count())
+      var i = 0
+      var name = csv.get(i, 0)
+      while name != "":
+        let m = parseFloat(csv.get(i, 1))
+        var cm = map.get(name, Measurement(0, 0, 0, 0))
+        cm.count += 1
+        cm.sum += m
+        cm.max = m if m > cm.max else cm.max
+        cm.min = m if m < cm.min else cm.min
+        map.put(name, cm)
+        i += 1
+        name = csv.get(i, 0)
+        # print(i, name)
+    map.debug()
