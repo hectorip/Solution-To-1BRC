@@ -2,7 +2,23 @@
 from csv import CsvTable
 from mojo_hash.hashmap import HashMapDict
 from mojo_hash.fnv1a import fnv1a64
+from collections.dict import Dict, KeyElement
 
+@value
+struct StringKey(KeyElement):
+    var s: String
+
+    fn __init__(inout self, owned s: String):
+        self.s = s ^
+
+    fn __init__(inout self, s: StringLiteral):
+        self.s = String(s)
+
+    fn __hash__(self) -> Int:
+        return hash(self.s)
+
+    fn __eq__(self, other: Self) -> Bool:
+        return self.s == other.s
 
 @value
 struct Measurement(CollectionElement):
@@ -25,7 +41,7 @@ fn parseFloat(s: String) -> Float64:
     return f
 
 fn main() raises:
-    var map = HashMapDict[Measurement, fnv1a64]()
+    var map = Dict[StringKey, Measurement]()
     with open('../../measurements.txt', 'r') as f:
       let csv = CsvTable(f.read(), True)
       # print(csv.row_count())
@@ -33,13 +49,13 @@ fn main() raises:
       var name = csv.get(i, 0)
       while name != "":
         let m = parseFloat(csv.get(i, 1))
-        var cm = map.get(name, Measurement(0, 0, 0, 0))
+        var cm = map.find(name).or_else(Measurement(0, 0, 0, 0)).value()
         cm.count += 1
         cm.sum += m
         cm.max = m if m > cm.max else cm.max
         cm.min = m if m < cm.min else cm.min
-        map.put(name, cm)
+        map[name] = cm
         i += 1
         name = csv.get(i, 0)
         # print(i, name)
-    map.debug()
+    # print(map)
