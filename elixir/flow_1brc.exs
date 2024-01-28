@@ -1,13 +1,12 @@
-# Stream the file into a concurrent map
+# Flow
 IO.puts(:erlang.system_info(:logical_processors_available))
 
 File.stream!("../../measurements.txt")
 # File.stream!("../1M.txt")
-|> Stream.chunk_every(5_000)
+|> Flow.from_enumerable()
+|> Stream.chunk_every(85_000)
 |> Task.async_stream(
   fn chunk ->
-    IO.puts("Chunk --")
-
     chunk
     |> Enum.reduce(%{}, fn line, acc ->
       [k, v] = String.split(line, ";")
