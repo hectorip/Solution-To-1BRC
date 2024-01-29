@@ -1,14 +1,15 @@
-# Flow
+# Using Elixir Flow that distributes the work across all the available cores
+
 IO.puts(:erlang.system_info(:logical_processors_available))
 alias Flow
-# File.stream!("../../measurements.txt")
-File.stream!("../../1M.txt")
+File.stream!("../../../measurements.txt")
+  # File.stream!("../../1M.txt")
 |> Flow.from_enumerable()
 |> Flow.map(fn line ->
   line
   |> String.trim()
   |> String.split(";")
-  |> fn [city, measure] -> {city, String.to_float(measure)} end)
+  |> Kernel.then(fn [city, measure] -> {city, String.to_float(measure)} end)
 end)
 |> Flow.partition()
 |> Flow.reduce(fn -> %{} end, fn {city, measure}, acc ->
@@ -19,3 +20,4 @@ end)
 end)
 |> Enum.to_list()
 |> IO.inspect()
+
